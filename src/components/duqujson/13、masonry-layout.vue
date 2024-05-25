@@ -1,0 +1,363 @@
+<template>
+  <div>
+    <!-- 分组展示标签 -->
+    <div class="sift">
+      <div>
+        <div class="tags" v-for="(tags, groupName) in groupedTags" :key="groupName">
+          <p>{{ groupName }}</p>
+          <button v-for="tag in tags" :key="tag" :class="{ active: selectedTags[groupName] === tag }" class="button"
+            @click="toggleTagSelection(tag, groupName)">
+            {{ tag }}
+          </button>
+        </div>
+      </div>
+      <button class="button quanbu" @click="clearFilter">清除筛选</button>
+    </div>
+
+    <div class="masonry" ref="masonryContainer">
+      <div v-for="image in paginatedImages" :key="image.folderName" class="image-item" @click="showImageDetails(image)">
+        <img :src="image.imageUrlThumbnail || image.imageUrl" :alt="image.folderName" />
+      </div>
+      <div ref="loadMoreTrigger" class="load-more-trigger"></div>
+    </div>
+
+    <div v-if="selectedImage" class="overlay" @click.self="closeImageDetails">
+      <div class="overlay-content">
+        <button class="close-btn" @click="closeImageDetails">X</button>
+        <img :src="selectedImage.imageUrl" :alt="selectedImage.folderName" class="overlay-image" />
+        <div class="image-info">
+          <div class="list-container">
+            <div>名称:</div>
+            <div>{{ selectedImage.name }}</div>
+          </div>
+          <div class="list-container">
+            <div>修改时间:</div>
+            <div>{{ formatTime(selectedImage.modificationTime) }}</div>
+          </div>
+          <div class="list-container" v-if="selectedImage.tags && selectedImage.tags.length > 0">
+            <div>标签:</div>
+            <div>{{ selectedImage.tags.join(", ") }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, watch } from "vue";
+import axios from "axios";
+import Masonry from "masonry-layout";
+
+const images = ref([]);
+const selectedImage = ref(null);
+const selectedTags = ref({}); // 用于存储按组选择的标签
+
+const currentPage = ref(1);
+const imagesPerPage = 20; // 每页加载的图片数量
+const loadMoreTrigger = ref(null);
+const masonryContainer = ref(null);
+let masonryInstance;
+
+onMounted(() => {
+  fetchImagesInfo();
+  // 设置 "叫叫" 标签默认选中
+  if (tagGroups.品牌.includes("叫叫")) {
+    selectedTags.value.品牌 = "叫叫";
+  }
+  setupIntersectionObserver();
+  setupMasonry();
+});
+
+async function fetchImagesInfo() {
+  try {
+    const response = await axios.get(
+      "https://uiweb.oss-cn-chengdu.aliyuncs.com/images/imagesInfo.json"
+    );
+    images.value = response.data;
+    updateMasonry();
+  } catch (error) {
+    console.error("Error fetching images info:", error);
+  }
+}
+
+function setupIntersectionObserver() {
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      loadMoreImages();
+    }
+  });
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value);
+  }
+}
+
+function loadMoreImages() {
+  currentPage.value += 1;
+  updateMasonry();
+}
+
+function showImageDetails(image) {
+  selectedImage.value = image;
+  // 隐藏主滚动条
+  document.body.style.overflow = "hidden";
+}
+
+function closeImageDetails() {
+  selectedImage.value = null;
+  // 恢复主滚动条
+  document.body.style.overflow = "";
+}
+
+function formatTime(timestamp) {
+  const date = new Date(timestamp);
+  return date.toLocaleString();
+}
+
+// 标签分组规则
+const tagGroups = {
+  品牌: [
+    "叫叫",
+    "火花思维",
+    "少年得到",
+    "喜马拉雅儿童",
+    "洋葱学院",
+    "百词斩",
+    "多领国",
+    "KaDa阅读",
+    "ahakid",
+    "洪恩分级阅读",
+    "作业帮"
+  ],
+  机型: ["pad", "手机"],
+  其他: [],
+};
+
+// 计算属性，用于筛选图片
+const filteredImages = computed(() => {
+  const selectedGroupTags = Object.values(selectedTags.value);
+  if (selectedGroupTags.length === 0) {
+    return images.value;
+  }
+  return images.value.filter((image) =>
+    selectedGroupTags.every((tag) => image.tags && image.tags.includes(tag))
+  );
+});
+
+const paginatedImages = computed(() => {
+  const startIndex = (currentPage.value - 1) * imagesPerPage;
+  return filteredImages.value.slice(0, startIndex + imagesPerPage);
+});
+
+// 获取唯一标签列表
+const uniqueTags = computed(() => {
+  const tags = new Set();
+  images.value.forEach((image) => {
+    if (image.tags) {
+      image.tags.forEach((tag) => tags.add(tag));
+    }
+  });
+  return Array.from(tags);
+});
+
+// 将标签分组
+const groupedTags = computed(() => {
+  const groups = {};
+
+  // 初始化分组
+  for (const groupName in tagGroups) {
+    groups[groupName] = [];
+  }
+
+  // 添加标签到相应的分组
+  uniqueTags.value.forEach((tag) => {
+    let added = false;
+    for (const groupName in tagGroups) {
+      if (tagGroups[groupName].includes(tag)) {
+        groups[groupName].push(tag);
+        added = true;
+        break;
+      }
+    }
+    // 如果没有匹配的分组，则加入“其他”分组
+    if (!added) {
+      if (!groups["其他"]) {
+        groups["其他"] = [];
+      }
+      groups["其他"].push(tag);
+    }
+  });
+
+  return groups;
+});
+
+// 切换标签选择的方法
+function toggleTagSelection(tag, groupName) {
+  if (selectedTags.value[groupName] === tag) {
+    delete selectedTags.value[groupName];
+  } else {
+    selectedTags.value[groupName] = tag;
+  }
+  // 重置分页
+  currentPage.value = 1;
+  updateMasonry();
+}
+
+// 清除筛选
+function clearFilter() {
+  selectedTags.value = {};
+  // 重置分页
+  currentPage.value = 1;
+  updateMasonry();
+}
+
+// 设置并更新 Masonry
+function setupMasonry() {
+  masonryInstance = new Masonry(masonryContainer.value, {
+    itemSelector: '.image-item',
+    columnWidth: '.image-item',
+    percentPosition: true,
+  });
+}
+
+function updateMasonry() {
+  if (masonryInstance) {
+    masonryInstance.reloadItems();
+    masonryInstance.layout();
+  }
+}
+
+watch(paginatedImages, () => {
+  updateMasonry();
+});
+</script>
+
+<style scoped>
+.masonry {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -1.5em;
+  /* gutter size offset */
+  width: auto;
+}
+
+.image-item {
+  margin-bottom: 1.5em;
+  padding-left: 1.5em;
+  /* gutter size */
+  width: calc(16.6666666667% - 1.5em);
+  /* Adjust based on number of columns */
+  transition-duration: 0s;
+  /* 设置过渡时间为 0.3 秒 */
+  cursor: pointer;
+  box-shadow: 0 0.25em 3.125em #00000014;
+}
+
+.image-item img {
+  width: 100%;
+  display: block;
+  border-radius: 5px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-y: auto;
+}
+
+.overlay-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  max-width: 90%;
+  position: relative;
+  display: flex;
+  margin: 32px auto 32px auto;
+  justify-content: center;
+  border-radius: 20px;
+  height: auto;
+  width: max-content;
+}
+
+.overlay-image {
+  width: 640px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 20px;
+  cursor: zoom-in;
+}
+
+.image-info {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  padding: 32px;
+  margin-top: 16px;
+}
+
+.image-info .list-container {
+  display: flex;
+  height: 24px;
+  margin: 4px 0;
+  align-items: center;
+}
+
+.sift {
+  display: flex;
+  justify-content: space-between;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 16px;
+}
+
+.button {
+  background-color: #f6f6f6;
+  border: none;
+  color: #333;
+  height: 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+button.active {
+  background-color: #42b983;
+  color: white;
+}
+
+.quanbu {
+  height: 32px;
+  margin: 4px 16px;
+  background-color: #f44336;
+  color: white;
+}
+
+.load-more-trigger {
+  height: 1px;
+}
+</style>
