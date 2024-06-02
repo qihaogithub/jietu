@@ -285,7 +285,6 @@ function formatTime(timestamp) {
   font-size: 1.5em;
   cursor: pointer;
 }
-
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -293,7 +292,6 @@ function formatTime(timestamp) {
   align-items: center;
   padding: 4px 16px;
 }
-
 .button {
   background-color: #f6f6f6;
   border: none;
@@ -307,12 +305,10 @@ function formatTime(timestamp) {
   cursor: pointer;
   border-radius: 5px;
 }
-
 button.active {
   background-color: #42b983;
   color: white;
 }
-
 .quanbu {
   height: 32px;
   margin: 4px 16px;
