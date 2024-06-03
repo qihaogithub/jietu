@@ -90,30 +90,10 @@ async function fetchImagesInfo() {
     const response = await axios.get(
       "https://uiweb.oss-cn-chengdu.aliyuncs.com/images/imagesInfo.json"
     );
-    console.log(response); // 打印整个响应对象
-    console.log(response.data); // 打印响应的数据部分
     images.value = response.data;
   } catch (error) {
     console.error("Error fetching images info:", error);
   }
-}
-
-function showImageDetails(image) {
-  selectedImage.value = image;
-  // 隐藏主滚动条
-  document.body.style.overflow = "hidden";
-}
-
-function closeImageDetails() {
-  selectedImage.value = null;
-  // 恢复主滚动条
-  document.body.style.overflow = "";
-}
-
-// 格式化时间戳为日期和时间
-function formatTime(timestamp) {
-  const date = new Date(timestamp);
-  return date.toLocaleString();
 }
 
 // 标签分组规则
@@ -129,21 +109,11 @@ const tagGroups = {
     "KaDa阅读",
     "ahakid",
     "洪恩分级阅读",
+    "作业帮",
   ],
   机型: ["pad", "手机"],
   其他: [],
 };
-
-// 计算属性，用于筛选图片
-const filteredImages = computed(() => {
-  const selectedGroupTags = Object.values(selectedTags.value);
-  if (selectedGroupTags.length === 0) {
-    return images.value;
-  }
-  return images.value.filter((image) =>
-    selectedGroupTags.every((tag) => image.tags && image.tags.includes(tag))
-  );
-});
 
 // 获取唯一标签列表
 const uniqueTags = computed(() => {
@@ -187,6 +157,18 @@ const groupedTags = computed(() => {
   return groups;
 });
 
+// 计算属性，用于筛选图片
+const filteredImages = computed(() => {
+  const selectedGroupTags = Object.values(selectedTags.value);
+  if (selectedGroupTags.length === 0) {
+    return images.value;
+  }
+  return images.value.filter(
+    (image) =>
+      selectedGroupTags.every((tag) => image.tags && image.tags.includes(tag)) //这意味着即使 image.tags 不存在，image.tags.includes(tag) 执行将导致运行时错误，因为尝试在一个 undefined 或 null 上调用 .includes() 方法是不允许的。
+  );
+});
+
 // 切换标签选择的方法
 function toggleTagSelection(tag, groupName) {
   if (selectedTags.value[groupName] === tag) {
@@ -199,6 +181,24 @@ function toggleTagSelection(tag, groupName) {
 // 清除筛选
 function clearFilter() {
   selectedTags.value = {};
+}
+
+function showImageDetails(image) {
+  selectedImage.value = image;
+  // 隐藏主滚动条
+  document.body.style.overflow = "hidden";
+}
+
+function closeImageDetails() {
+  selectedImage.value = null;
+  // 恢复主滚动条
+  document.body.style.overflow = "";
+}
+
+// 格式化时间戳为日期和时间
+function formatTime(timestamp) {
+  const date = new Date(timestamp);
+  return date.toLocaleString();
 }
 </script>
 
@@ -267,7 +267,8 @@ function clearFilter() {
 
 .overlay-image {
   width: 640px;
-  height: auto; /* Height will adjust automatically */
+  height: auto;
+  /* Height will adjust automatically */
   object-fit: contain;
   /* 确保图片不会变形 */
   border-radius: 20px;

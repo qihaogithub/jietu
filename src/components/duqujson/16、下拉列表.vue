@@ -8,24 +8,58 @@
           v-for="(tags, groupName) in groupedTags"
           :key="groupName"
         >
-          <p>{{ groupName }}</p>
-          <button
-            v-for="tag in tags"
-            :key="tag"
-            :class="{ active: selectedTags[groupName] === tag }"
-            class="button"
-            @click="toggleTagSelection(tag, groupName)"
+          <div v-if="groupName === '品牌'">
+            <button
+              v-for="tag in tags"
+              :key="tag"
+              :class="{ active: selectedTags[groupName] === tag }"
+              class="button"
+              @click="toggleTagSelection(tag, groupName)"
+            >
+              {{ tag }}
+            </button>
+          </div>
+        </div>
+        <div
+          class="tags"
+          v-for="(tags, groupName) in groupedTags"
+          :key="groupName"
+        >
+          <div
+            v-if="groupName === '机型' || groupName === '其他'"
+            class="custom-select"
+            @mouseenter="hoverDropdown(groupName, true)"
+            @mouseleave="hoverDropdown(groupName, false)"
           >
-            {{ tag }}
-          </button>
+            <div class="select-box" @click="toggleDropdown(groupName)">
+              <span>{{ selectedTags[groupName] || `${groupName}` }}</span>
+              <span
+                :class="{
+                  'arrow-down': !dropdownOpen[groupName],
+                  'arrow-up': dropdownOpen[groupName],
+                }"
+              ></span>
+            </div>
+            <div v-if="dropdownOpen[groupName]" class="options">
+              <div
+                v-for="tag in tags"
+                :key="tag"
+                @click="selectTag(tag, groupName)"
+                class="option"
+              >
+                {{ tag }}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
       <button class="button quanbu" @click="clearFilter">清除筛选</button>
     </div>
 
     <div class="masonry">
       <div
-        v-for="image in paginatedImages"
+        v-for="image in filteredImages"
         :key="image.folderName"
         class="image-item"
         @click="showImageDetails(image)"
@@ -35,14 +69,13 @@
           :alt="image.folderName"
         />
       </div>
-      <div ref="loadMoreTrigger" class="load-more-trigger"></div>
     </div>
 
     <div v-if="selectedImage" class="overlay" @click.self="closeImageDetails">
       <div class="overlay-content">
         <button class="close-btn" @click="closeImageDetails">X</button>
         <img
-          :src="selectedImage.imageUrl"
+          :src="selectedImage.imageUrl || image.imageUrlThumbnail"
           :alt="selectedImage.folderName"
           class="overlay-image"
         />
@@ -69,16 +102,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 
 const images = ref([]);
 const selectedImage = ref(null);
 const selectedTags = ref({}); // 用于存储按组选择的标签
-
-const currentPage = ref(1);
-const imagesPerPage = 20; // 每页加载的图片数量
-const loadMoreTrigger = ref(null);
+const dropdownOpen = ref({}); // 控制下拉菜单的状态
 
 onMounted(() => {
   fetchImagesInfo();
@@ -86,11 +116,11 @@ onMounted(() => {
   if (tagGroups.品牌.includes("叫叫")) {
     selectedTags.value.品牌 = "叫叫";
   }
-  setupIntersectionObserver();
 });
 
 async function fetchImagesInfo() {
   try {
+    // const response = await axios.get("/src/assets/imagesInfo.json");
     const response = await axios.get(
       "https://uiweb.oss-cn-chengdu.aliyuncs.com/images/imagesInfo.json"
     );
@@ -98,40 +128,6 @@ async function fetchImagesInfo() {
   } catch (error) {
     console.error("Error fetching images info:", error);
   }
-}
-
-// 设置了并使用了IntersectionObserver API来观察一个元素是否进入或离开视口（viewport）。当元素与视口相交时，即当它进入视口时，IntersectionObserver的回调函数会被触发
-function setupIntersectionObserver() {
-  const observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
-      loadMoreImages();
-    }
-  });
-  if (loadMoreTrigger.value) {
-    observer.observe(loadMoreTrigger.value);
-  }
-}
-
-function loadMoreImages() {
-  currentPage.value += 1;
-}
-
-function showImageDetails(image) {
-  selectedImage.value = image;
-  // 隐藏主滚动条
-  document.body.style.overflow = "hidden";
-}
-
-function closeImageDetails() {
-  selectedImage.value = null;
-  // 恢复主滚动条
-  document.body.style.overflow = "";
-}
-
-// 格式化时间戳为日期和时间
-function formatTime(timestamp) {
-  const date = new Date(timestamp);
-  return date.toLocaleString();
 }
 
 // 标签分组规则
@@ -147,26 +143,11 @@ const tagGroups = {
     "KaDa阅读",
     "ahakid",
     "洪恩分级阅读",
+    "作业帮",
   ],
   机型: ["pad", "手机"],
   其他: [],
 };
-
-// 计算属性，用于筛选图片
-const filteredImages = computed(() => {
-  const selectedGroupTags = Object.values(selectedTags.value);
-  if (selectedGroupTags.length === 0) {
-    return images.value;
-  }
-  return images.value.filter((image) =>
-    selectedGroupTags.every((tag) => image.tags && image.tags.includes(tag))
-  );
-});
-
-const paginatedImages = computed(() => {
-  const startIndex = (currentPage.value - 1) * imagesPerPage;
-  return filteredImages.value.slice(0, startIndex + imagesPerPage);
-});
 
 // 获取唯一标签列表
 const uniqueTags = computed(() => {
@@ -210,6 +191,18 @@ const groupedTags = computed(() => {
   return groups;
 });
 
+// 计算属性，用于筛选图片
+const filteredImages = computed(() => {
+  const selectedGroupTags = Object.values(selectedTags.value);
+  if (selectedGroupTags.length === 0) {
+    return images.value;
+  }
+  return images.value.filter(
+    (image) =>
+      selectedGroupTags.every((tag) => image.tags && image.tags.includes(tag)) //这意味着即使 image.tags 不存在，image.tags.includes(tag) 执行将导致运行时错误，因为尝试在一个 undefined 或 null 上调用 .includes() 方法是不允许的。
+  );
+});
+
 // 切换标签选择的方法
 function toggleTagSelection(tag, groupName) {
   if (selectedTags.value[groupName] === tag) {
@@ -217,19 +210,176 @@ function toggleTagSelection(tag, groupName) {
   } else {
     selectedTags.value[groupName] = tag;
   }
-  // 重置分页
-  currentPage.value = 1;
+  filterImages();
 }
 
 // 清除筛选
 function clearFilter() {
   selectedTags.value = {};
-  // 重置分页
-  currentPage.value = 1;
+}
+
+// 过滤图片
+function filterImages() {
+  // 触发 filteredImages 重新计算
+  selectedTags.value = { ...selectedTags.value };
+}
+
+// 切换下拉菜单的显示状态
+function toggleDropdown(groupName) {
+  dropdownOpen.value[groupName] = !dropdownOpen.value[groupName];
+}
+
+// 鼠标悬停时切换箭头方向
+function hoverDropdown(groupName, isHovering) {
+  if (isHovering) {
+    dropdownOpen.value[groupName] = true;
+  } else {
+    dropdownOpen.value[groupName] = false;
+  }
+}
+
+// 选择标签
+function selectTag(tag, groupName) {
+  selectedTags.value[groupName] = tag;
+  dropdownOpen.value[groupName] = false;
+  filterImages();
+}
+
+function showImageDetails(image) {
+  selectedImage.value = image;
+  // 隐藏主滚动条
+  document.body.style.overflow = "hidden";
+}
+
+function closeImageDetails() {
+  selectedImage.value = null;
+  // 恢复主滚动条
+  document.body.style.overflow = "";
+}
+
+// 格式化时间戳为日期和时间
+function formatTime(timestamp) {
+  const date = new Date(timestamp);
+  return date.toLocaleString();
 }
 </script>
 
 <style scoped>
+.sift {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.tags {
+  margin-bottom: 10px;
+}
+
+.button {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.quanbu {
+  margin-top: 10px;
+}
+
+.masonry {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.image-item {
+  width: 200px;
+  margin: 10px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.overlay-content {
+  background: white;
+  padding: 20px;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.overlay-image {
+  max-width: 100%;
+  max-height: 80vh;
+}
+
+.image-info {
+  margin-top: 10px;
+}
+
+.list-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.custom-select {
+  position: relative;
+}
+
+.select-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  user-select: none;
+}
+
+.options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  border: 1px solid #ccc;
+  background: white;
+  z-index: 1;
+}
+
+.option {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: #f0f0f0;
+}
+
+.arrow-down::after {
+  content: "▼";
+  display: inline-block;
+  margin-left: 5px;
+}
+
+.arrow-up::after {
+  content: "▲";
+  display: inline-block;
+  margin-left: 5px;
+}
+
+/* 旧的 */
 .masonry {
   column-count: auto;
   column-width: 12em;
@@ -294,7 +444,8 @@ function clearFilter() {
 
 .overlay-image {
   width: 640px;
-  height: auto; /* Height will adjust automatically */
+  height: auto;
+  /* Height will adjust automatically */
   object-fit: contain;
   /* 确保图片不会变形 */
   border-radius: 20px;
@@ -327,7 +478,7 @@ function clearFilter() {
   right: 10px;
   background: none;
   border: none;
-  font-size: 1 5em;
+  font-size: 1.5em;
   cursor: pointer;
 }
 .tags {
@@ -357,10 +508,5 @@ button.active {
 .quanbu {
   height: 32px;
   margin: 4px 16px;
-  background-color: #f44336;
-  color: white;
-}
-.load-more-trigger {
-  height: 1px;
 }
 </style>
