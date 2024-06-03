@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 // import HomeView from "../views/HomeView.vue";
-import screenshot from "../components/duqujson/15.vue";
+import screenshot from "../components/标签筛选/App.vue.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,14 +16,14 @@ const router = createRouter({
       component: screenshot,
     },
     {
-      path: "/about",
-      name: "about",
+      path: "/09",
+      name: "09",
       component: () => import("../components/duqujson/9、支持缩略图.vue"),
     },
     {
       path: "/test",
       name: "test",
-      component: () => import("../components/duqujson/瀑布流测试.vue"),
+      component: () => import("../components/duqujson/10、分页加载.vue"),
     },
   ],
 });

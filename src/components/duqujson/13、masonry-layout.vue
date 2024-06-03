@@ -3,19 +3,10 @@
     <!-- 分组展示标签 -->
     <div class="sift">
       <div>
-        <div
-          class="tags"
-          v-for="(tags, groupName) in groupedTags"
-          :key="groupName"
-        >
+        <div class="tags" v-for="(tags, groupName) in groupedTags" :key="groupName">
           <p>{{ groupName }}</p>
-          <button
-            v-for="tag in tags"
-            :key="tag"
-            :class="{ active: selectedTags[groupName] === tag }"
-            class="button"
-            @click="toggleTagSelection(tag, groupName)"
-          >
+          <button v-for="tag in tags" :key="tag" :class="{ active: selectedTags[groupName] === tag }" class="button"
+            @click="toggleTagSelection(tag, groupName)">
             {{ tag }}
           </button>
         </div>
@@ -23,17 +14,9 @@
       <button class="button quanbu" @click="clearFilter">清除筛选</button>
     </div>
 
-    <div class="masonry">
-      <div
-        v-for="image in paginatedImages"
-        :key="image.folderName"
-        class="image-item"
-        @click="showImageDetails(image)"
-      >
-        <img
-          :src="image.imageUrlThumbnail || image.imageUrl"
-          :alt="image.folderName"
-        />
+    <div class="masonry" ref="masonryContainer">
+      <div v-for="image in paginatedImages" :key="image.folderName" class="image-item" @click="showImageDetails(image)">
+        <img :src="image.imageUrlThumbnail || image.imageUrl" :alt="image.folderName" />
       </div>
       <div ref="loadMoreTrigger" class="load-more-trigger"></div>
     </div>
@@ -41,11 +24,7 @@
     <div v-if="selectedImage" class="overlay" @click.self="closeImageDetails">
       <div class="overlay-content">
         <button class="close-btn" @click="closeImageDetails">X</button>
-        <img
-          :src="selectedImage.imageUrl"
-          :alt="selectedImage.folderName"
-          class="overlay-image"
-        />
+        <img :src="selectedImage.imageUrl" :alt="selectedImage.folderName" class="overlay-image" />
         <div class="image-info">
           <div class="list-container">
             <div>名称:</div>
@@ -55,10 +34,7 @@
             <div>修改时间:</div>
             <div>{{ formatTime(selectedImage.modificationTime) }}</div>
           </div>
-          <div
-            class="list-container"
-            v-if="selectedImage.tags && selectedImage.tags.length > 0"
-          >
+          <div class="list-container" v-if="selectedImage.tags && selectedImage.tags.length > 0">
             <div>标签:</div>
             <div>{{ selectedImage.tags.join(", ") }}</div>
           </div>
@@ -71,6 +47,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import axios from "axios";
+import Masonry from "masonry-layout";
 
 const images = ref([]);
 const selectedImage = ref(null);
@@ -79,6 +56,8 @@ const selectedTags = ref({}); // 用于存储按组选择的标签
 const currentPage = ref(1);
 const imagesPerPage = 20; // 每页加载的图片数量
 const loadMoreTrigger = ref(null);
+const masonryContainer = ref(null);
+let masonryInstance;
 
 onMounted(() => {
   fetchImagesInfo();
@@ -87,6 +66,7 @@ onMounted(() => {
     selectedTags.value.品牌 = "叫叫";
   }
   setupIntersectionObserver();
+  setupMasonry();
 });
 
 async function fetchImagesInfo() {
@@ -95,12 +75,12 @@ async function fetchImagesInfo() {
       "https://uiweb.oss-cn-chengdu.aliyuncs.com/images/imagesInfo.json"
     );
     images.value = response.data;
+    updateMasonry();
   } catch (error) {
     console.error("Error fetching images info:", error);
   }
 }
 
-// 设置了并使用了IntersectionObserver API来观察一个元素是否进入或离开视口（viewport）。当元素与视口相交时，即当它进入视口时，IntersectionObserver的回调函数会被触发
 function setupIntersectionObserver() {
   const observer = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting) {
@@ -114,6 +94,7 @@ function setupIntersectionObserver() {
 
 function loadMoreImages() {
   currentPage.value += 1;
+  updateMasonry();
 }
 
 function showImageDetails(image) {
@@ -128,7 +109,6 @@ function closeImageDetails() {
   document.body.style.overflow = "";
 }
 
-// 格式化时间戳为日期和时间
 function formatTime(timestamp) {
   const date = new Date(timestamp);
   return date.toLocaleString();
@@ -147,6 +127,7 @@ const tagGroups = {
     "KaDa阅读",
     "ahakid",
     "洪恩分级阅读",
+    "作业帮"
   ],
   机型: ["pad", "手机"],
   其他: [],
@@ -219,6 +200,7 @@ function toggleTagSelection(tag, groupName) {
   }
   // 重置分页
   currentPage.value = 1;
+  updateMasonry();
 }
 
 // 清除筛选
@@ -226,34 +208,48 @@ function clearFilter() {
   selectedTags.value = {};
   // 重置分页
   currentPage.value = 1;
+  updateMasonry();
 }
+
+// 设置并更新 Masonry
+function setupMasonry() {
+  masonryInstance = new Masonry(masonryContainer.value, {
+    itemSelector: '.image-item',
+    columnWidth: '.image-item',
+    percentPosition: true,
+  });
+}
+
+function updateMasonry() {
+  if (masonryInstance) {
+    masonryInstance.reloadItems();
+    masonryInstance.layout();
+  }
+}
+
+watch(paginatedImages, () => {
+  updateMasonry();
+});
 </script>
 
 <style scoped>
 .masonry {
-  column-count: auto;
-  column-width: 12em;
-  column-gap: 1.5em;
-  padding: 1.5em;
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -1.5em;
+  /* gutter size offset */
+  width: auto;
 }
 
 .image-item {
-  break-inside: avoid;
-  margin-bottom: 1em;
+  margin-bottom: 1.5em;
+  padding-left: 1.5em;
+  /* gutter size */
+  width: calc(16.6666666667% - 1.5em);
+  /* Adjust based on number of columns */
+  transition-duration: 0s;
+  /* 设置过渡时间为 0.3 秒 */
   cursor: pointer;
-}
-
-.image-item img {
-  width: 100%;
-  display: block;
-  border-radius: 5px;
-}
-
-.image-item {
-  break-inside: avoid;
-  margin-bottom: 1em;
-  cursor: pointer;
-
   box-shadow: 0 0.25em 3.125em #00000014;
 }
 
@@ -287,16 +283,13 @@ function clearFilter() {
   justify-content: center;
   border-radius: 20px;
   height: auto;
-  /* 自动根据内容调整高度 */
   width: max-content;
-  /* 自动根据内容调整宽度 */
 }
 
 .overlay-image {
   width: 640px;
-  height: auto; /* Height will adjust automatically */
+  height: auto;
   object-fit: contain;
-  /* 确保图片不会变形 */
   border-radius: 20px;
   cursor: zoom-in;
 }
@@ -327,9 +320,10 @@ function clearFilter() {
   right: 10px;
   background: none;
   border: none;
-  font-size: 1 5em;
+  font-size: 1.5em;
   cursor: pointer;
 }
+
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -337,11 +331,11 @@ function clearFilter() {
   align-items: center;
   padding: 4px 16px;
 }
+
 .button {
   background-color: #f6f6f6;
   border: none;
   color: #333;
-  /* padding: 4px 16px; */
   height: 32px;
   text-align: center;
   text-decoration: none;
@@ -350,16 +344,19 @@ function clearFilter() {
   cursor: pointer;
   border-radius: 5px;
 }
+
 button.active {
   background-color: #42b983;
   color: white;
 }
+
 .quanbu {
   height: 32px;
   margin: 4px 16px;
   background-color: #f44336;
   color: white;
 }
+
 .load-more-trigger {
   height: 1px;
 }

@@ -3,19 +3,10 @@
     <!-- 分组展示标签 -->
     <div class="sift">
       <div>
-        <div
-          class="tags"
-          v-for="(tags, groupName) in groupedTags"
-          :key="groupName"
-        >
+        <div class="tags" v-for="(tags, groupName) in groupedTags" :key="groupName">
           <p>{{ groupName }}</p>
-          <button
-            v-for="tag in tags"
-            :key="tag"
-            :class="{ active: selectedTags[groupName] === tag }"
-            class="button"
-            @click="toggleTagSelection(tag, groupName)"
-          >
+          <button v-for="tag in tags" :key="tag" :class="{ active: selectedTags[groupName] === tag }" class="button"
+            @click="toggleTagSelection(tag, groupName)">
             {{ tag }}
           </button>
         </div>
@@ -23,29 +14,18 @@
       <button class="button quanbu" @click="clearFilter">清除筛选</button>
     </div>
 
-    <div class="masonry">
-      <div
-        v-for="image in paginatedImages"
-        :key="image.folderName"
-        class="image-item"
-        @click="showImageDetails(image)"
-      >
-        <img
-          :src="image.imageUrlThumbnail || image.imageUrl"
-          :alt="image.folderName"
-        />
+    <Masonry :cols="{ default: 3, 1100: 2, 700: 1 }" gutter="30px">
+      <div v-for="image in paginatedImages" :key="image.folderName" class="image-item" @click="showImageDetails(image)">
+        <img :src="image.imageUrlThumbnail || image.imageUrl" :alt="image.folderName" />
       </div>
-      <div ref="loadMoreTrigger" class="load-more-trigger"></div>
-    </div>
+    </Masonry>
+
+    <div ref="loadMoreTrigger" class="load-more-trigger"></div>
 
     <div v-if="selectedImage" class="overlay" @click.self="closeImageDetails">
       <div class="overlay-content">
         <button class="close-btn" @click="closeImageDetails">X</button>
-        <img
-          :src="selectedImage.imageUrl"
-          :alt="selectedImage.folderName"
-          class="overlay-image"
-        />
+        <img :src="selectedImage.imageUrl" :alt="selectedImage.folderName" class="overlay-image" />
         <div class="image-info">
           <div class="list-container">
             <div>名称:</div>
@@ -55,10 +35,7 @@
             <div>修改时间:</div>
             <div>{{ formatTime(selectedImage.modificationTime) }}</div>
           </div>
-          <div
-            class="list-container"
-            v-if="selectedImage.tags && selectedImage.tags.length > 0"
-          >
+          <div class="list-container" v-if="selectedImage.tags && selectedImage.tags.length > 0">
             <div>标签:</div>
             <div>{{ selectedImage.tags.join(", ") }}</div>
           </div>
@@ -68,9 +45,11 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import axios from "axios";
+import Masonry from "vue-masonry-css";
 
 const images = ref([]);
 const selectedImage = ref(null);
@@ -100,7 +79,6 @@ async function fetchImagesInfo() {
   }
 }
 
-// 设置了并使用了IntersectionObserver API来观察一个元素是否进入或离开视口（viewport）。当元素与视口相交时，即当它进入视口时，IntersectionObserver的回调函数会被触发
 function setupIntersectionObserver() {
   const observer = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting) {
@@ -128,7 +106,6 @@ function closeImageDetails() {
   document.body.style.overflow = "";
 }
 
-// 格式化时间戳为日期和时间
 function formatTime(timestamp) {
   const date = new Date(timestamp);
   return date.toLocaleString();
@@ -228,32 +205,25 @@ function clearFilter() {
   currentPage.value = 1;
 }
 </script>
+s
+
 
 <style scoped>
 .masonry {
-  column-count: auto;
-  column-width: 12em;
-  column-gap: 1.5em;
-  padding: 1.5em;
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -30px;
+  /* gutter size offset */
+  width: auto;
 }
 
 .image-item {
-  break-inside: avoid;
-  margin-bottom: 1em;
+  margin-bottom: 30px;
+  padding-left: 30px;
+  /* gutter size */
+  width: calc(33.333% - 30px);
+  /* Adjust based on number of columns */
   cursor: pointer;
-}
-
-.image-item img {
-  width: 100%;
-  display: block;
-  border-radius: 5px;
-}
-
-.image-item {
-  break-inside: avoid;
-  margin-bottom: 1em;
-  cursor: pointer;
-
   box-shadow: 0 0.25em 3.125em #00000014;
 }
 
@@ -261,6 +231,18 @@ function clearFilter() {
   width: 100%;
   display: block;
   border-radius: 5px;
+}
+
+@media (max-width: 1100px) {
+  .image-item {
+    width: calc(50% - 30px);
+  }
+}
+
+@media (max-width: 700px) {
+  .image-item {
+    width: calc(100% - 30px);
+  }
 }
 
 .overlay {
@@ -287,16 +269,13 @@ function clearFilter() {
   justify-content: center;
   border-radius: 20px;
   height: auto;
-  /* 自动根据内容调整高度 */
   width: max-content;
-  /* 自动根据内容调整宽度 */
 }
 
 .overlay-image {
   width: 640px;
-  height: auto; /* Height will adjust automatically */
+  height: auto;
   object-fit: contain;
-  /* 确保图片不会变形 */
   border-radius: 20px;
   cursor: zoom-in;
 }
@@ -327,9 +306,10 @@ function clearFilter() {
   right: 10px;
   background: none;
   border: none;
-  font-size: 1 5em;
+  font-size: 1.5em;
   cursor: pointer;
 }
+
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -337,11 +317,11 @@ function clearFilter() {
   align-items: center;
   padding: 4px 16px;
 }
+
 .button {
   background-color: #f6f6f6;
   border: none;
   color: #333;
-  /* padding: 4px 16px; */
   height: 32px;
   text-align: center;
   text-decoration: none;
@@ -350,16 +330,19 @@ function clearFilter() {
   cursor: pointer;
   border-radius: 5px;
 }
+
 button.active {
   background-color: #42b983;
   color: white;
 }
+
 .quanbu {
   height: 32px;
   margin: 4px 16px;
   background-color: #f44336;
   color: white;
 }
+
 .load-more-trigger {
   height: 1px;
 }
