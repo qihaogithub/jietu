@@ -69,12 +69,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeMount } from "vue";
 import axios from "axios";
 
 const images = ref([]);
 const selectedImage = ref(null);
 const selectedTags = ref({}); // 用于存储按组选择的标签
+
+onBeforeMount(() => {
+  fetchImagesInfo();
+});
 
 onMounted(() => {
   fetchImagesInfo();
