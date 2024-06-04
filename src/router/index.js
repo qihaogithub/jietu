@@ -23,7 +23,7 @@ const router = createRouter({
     {
       path: "/test",
       name: "test",
-      component: () => import("../components/duqujson/16、下拉列表.vue"),
+      component: () => import("../components/标签筛选/展示.vue"),
     },
   ],
 });

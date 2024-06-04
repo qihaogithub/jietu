@@ -1,5 +1,7 @@
 <template>
-  {{ filteredItems }}
+  <!-- {{ filteredItems }} -->
+  {{ tagsGroups }}
+
   <div id="app">
     <h1>标签筛选示例</h1>
     <TagFilter :tags="tags" v-model:selectedTags="selectedTags" />
@@ -8,7 +10,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import axios from "axios";
 import TagFilter from "./TagFilter.vue";
 import ItemList from "./ItemList.vue";
 
@@ -19,6 +22,23 @@ const items = ref([
   { id: 2, name: "Item 2", tags: ["Tag2"] },
   { id: 3, name: "Item 3", tags: ["Tag1", "Tag3"] },
 ]);
+const tagsGroups = ref([]);
+
+onMounted(() => {
+  fetchImagesInfo();
+});
+// 获取eagle元数据
+async function fetchImagesInfo() {
+  try {
+    const response = await axios.get(
+      "https://uiweb.oss-cn-chengdu.aliyuncs.com/images/jietu.library/metadata.json"
+    );
+    // 将解构出来的tagsGroups赋值给响应式引用tagsGroups
+    tagsGroups.value = response.data.tagsGroups;
+  } catch (error) {
+    console.error("Error fetching images info:", error);
+  }
+}
 
 const selectedTags = ref([]);
 
