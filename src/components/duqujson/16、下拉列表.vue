@@ -102,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, Mounted } from "vue";
+import { ref, computed, onMounted, onBeforeMount } from "vue";
 import axios from "axios";
 
 const images = ref([]);
@@ -110,21 +110,17 @@ const selectedImage = ref(null);
 const selectedTags = ref({}); // 用于存储按组选择的标签
 const dropdownOpen = ref({}); // 控制下拉菜单的状态
 
-Mounted(() => {
+onBeforeMount(() => {
+  fetchImagesInfo();
+});
+
+onMounted(() => {
   fetchImagesInfo();
   // 设置 "叫叫" 标签默认选中
   if (tagGroups.品牌.includes("叫叫")) {
     selectedTags.value.品牌 = "叫叫";
   }
 });
-
-// onMounted(() => {
-//   fetchImagesInfo();
-//   // 设置 "叫叫" 标签默认选中
-//   if (tagGroups.品牌.includes("叫叫")) {
-//     selectedTags.value.品牌 = "叫叫";
-//   }
-// });
 
 async function fetchImagesInfo() {
   try {

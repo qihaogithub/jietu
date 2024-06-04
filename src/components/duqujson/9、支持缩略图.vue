@@ -88,6 +88,14 @@ onMounted(() => {
   }
 });
 
+// onMounted(() => {
+//   fetchImagesInfo();
+//   // 设置 "叫叫" 标签默认选中
+//   if (tagGroups.品牌.includes("叫叫")) {
+//     selectedTags.value.品牌 = "叫叫";
+//   }
+// });
+
 async function fetchImagesInfo() {
   try {
     // const response = await axios.get("/src/assets/imagesInfo.json");
