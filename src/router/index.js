@@ -16,9 +16,9 @@ const router = createRouter({
       component: home,
     },
     {
-      path: "/09",
-      name: "09",
-      component: () => import("../components/duqujson/9、支持缩略图.vue"),
+      path: "/17",
+      name: "17",
+      component: () => import("../components/duqujson/17、获取eagle分组.vue"),
     },
     {
       path: "/test",

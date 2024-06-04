@@ -25,10 +25,10 @@ const items = ref([
 const tagsGroups = ref([]);
 
 onMounted(() => {
-  fetchImagesInfo();
+  fetchmetadata();
 });
 // 获取eagle元数据
-async function fetchImagesInfo() {
+async function fetchmetadata() {
   try {
     const response = await axios.get(
       "https://uiweb.oss-cn-chengdu.aliyuncs.com/images/jietu.library/metadata.json"
