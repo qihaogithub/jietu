@@ -1,16 +1,33 @@
 <template>
   <div>
+    <!-- 品牌展示标签 -->
+    <div class="sift">
+      <button
+        class="tags"
+        :class="{ active: selectedTags.includes(tags) }"
+        v-for="(folderName, index) in folderName"
+        :key="index"
+        @click="toggleTag(tags)"
+      >
+        {{ folderName }}
+      </button>
+    </div>
+
     <!-- 分组展示标签 -->
     <div class="sift">
       <div>
-        <div class="tags" v-for="(tagGroup, index) in tagsGroups" :key="index">
+        <div
+          class="tags"
+          v-for="(tagGroup, index) in tagsGroupsAll"
+          :key="index"
+        >
           <p>{{ tagGroup.name }}</p>
           <button
             v-for="tags in tagGroup.tags"
-            :key="tag"
-            :class="{ active: selectedTags.includes(tag) }"
+            :key="tags"
+            :class="{ active: selectedTags.includes(tags) }"
             class="button"
-            @click="toggleTag(tag)"
+            @click="toggleTag(tags)"
           >
             {{ tags }}
           </button>
@@ -76,6 +93,7 @@ onBeforeMount(() => {
   fetchImagesInfo();
 });
 
+// 获取eagle分组中的图片信息
 async function fetchImagesInfo() {
   try {
     // const response = await axios.get("/src/assets/imagesInfo.json");
@@ -88,20 +106,25 @@ async function fetchImagesInfo() {
   }
 }
 
-// 获取eagle元数据中的标签分组信息
-const tagsGroups = ref([]);
+// 新建响应式引用tagsGroupsAll用以储存所有标签分组信息（包括未使用标签）
+const tagsGroupsAll = ref([]);
 
+const folderName = ref(null);
+
+const metadata = ref(null);
 onMounted(() => {
   fetchmetadata();
 });
-// 获取eagle元数据
+// 获取eagle元数据中的标签分组信息
 async function fetchmetadata() {
   try {
     const response = await axios.get(
       "https://uiweb.oss-cn-chengdu.aliyuncs.com/images/jietu.library/metadata.json"
     );
-    // 将解构出来的tagsGroups赋值给响应式引用tagsGroups
-    tagsGroups.value = response.data.tagsGroups;
+    // 将解构出来的tagsGroups赋值给响应式引用tagsGroupsAll
+    metadata.value = response.data;
+    tagsGroupsAll.value = response.data.tagsGroups;
+    folderName.value = response.data.folders.map((folder) => folder.name);
   } catch (error) {
     console.error("Error fetching images info:", error);
   }

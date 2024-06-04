@@ -81,20 +81,11 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-  fetchImagesInfo();
   // 设置 "叫叫" 标签默认选中
   if (tagGroups.品牌.includes("叫叫")) {
     selectedTags.value.品牌 = "叫叫";
   }
 });
-
-// onMounted(() => {
-//   fetchImagesInfo();
-//   // 设置 "叫叫" 标签默认选中
-//   if (tagGroups.品牌.includes("叫叫")) {
-//     selectedTags.value.品牌 = "叫叫";
-//   }
-// });
 
 async function fetchImagesInfo() {
   try {
@@ -122,6 +113,7 @@ const tagGroups = {
     "ahakid",
     "洪恩分级阅读",
     "作业帮",
+    "斑马",
   ],
   机型: ["pad", "手机"],
   其他: [],
