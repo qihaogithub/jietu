@@ -5,10 +5,13 @@ import { createPinia } from "pinia";
 
 import App from "./App.vue";
 import router from "./router";
-import { VueMasonryPlugin } from "vue-masonry";
+import LazyLoad from "vue-lazyload-next";
 
 const app = createApp(App);
+app.use(LazyLoad, {
+  loading: "path/to/loading-spinner.png",
+  error: "path/to/error-image.png",
+});
 app.use(createPinia());
 app.use(router);
-app.use(VueMasonryPlugin);
 app.mount("#app");

@@ -18,7 +18,12 @@ const router = createRouter({
     {
       path: "/17",
       name: "17",
-      component: () => import("../components/duqujson/17、获取eagle分组.vue"),
+      component: () => import("../components/自定义瀑布流组件/app.vue"),
+    },
+    {
+      path: "/18",
+      name: "18",
+      component: () => import("../components/品牌筛选/主要.vue"),
     },
     {
       path: "/test",
