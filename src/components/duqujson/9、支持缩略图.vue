@@ -215,23 +215,10 @@ function formatTime(timestamp) {
 }
 
 .image-item {
-  break-inside: avoid;
   margin-bottom: 1em;
-  cursor: pointer;
-}
-
-.image-item img {
-  width: 100%;
-  display: block;
-  border-radius: 5px;
-}
-
-.image-item {
-  break-inside: avoid;
-  margin-bottom: 1em;
-  cursor: pointer;
-
-  box-shadow: 0 0.25em 3.125em #00000014;
+  border-radius: 2em;
+  border: 1px solid #f5f4f4;
+  box-shadow: 0px 14px 40px 0px rgba(0, 0, 0, 0.08);
 }
 
 .image-item img {
