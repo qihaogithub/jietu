@@ -124,6 +124,22 @@ const originData = [
     user: "2",
     like: "952",
   },
+  {
+          img: "https://image.watsons.com.cn//upload/02a4f38d.jpg?w=1067&h=1067&x-oss-process=image/resize,w_1080",
+          avatar:
+            "https://img.xiaohongshu.com/avatar/5b7d198a7e6e15000155f7c9.jpg@80w_80h_90q_1e_1c_1x.jpg",
+          title: "最近浴室新宠，日系神仙好物了解一下～",
+          user: "3",
+          like: "953",
+        },
+        {
+          img: "https://image.watsons.com.cn//upload/589585c1.jpeg?x-oss-process=image/resize,w_1080",
+          avatar:
+            "https://img.xiaohongshu.com/avatar/5b7d198a7e6e15000155f7c9.jpg@80w_80h_90q_1e_1c_1x.jpg",
+          title: "50元搞定全套护肤品，这些护肤好物必须交出来！",
+          user: "4",
+          like: "953",
+        },
 ];
 
 const itemWidth = computed(() => 133 * 0.5 * (document.documentElement.clientWidth / 375));
