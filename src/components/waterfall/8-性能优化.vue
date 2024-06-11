@@ -18,12 +18,12 @@
       <div
         class="cell-item"
         v-for="(item, index) in data"
-        :key="index"
+        :key="item.id"
         @click="showImageDetails(index)"
       >
         <img
           :lazy-src="item.imageUrlThumbnail || item.imageUrl"
-          alt="item.folderName"
+          :alt="item.folderName"
         />
 
         <div class="item-body">
