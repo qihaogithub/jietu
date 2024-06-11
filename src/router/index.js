@@ -18,17 +18,17 @@ const router = createRouter({
     {
       path: "/17",
       name: "17",
-      component: () => import("../components/自定义瀑布流组件/app.vue"),
-    },
-    {
-      path: "/18",
-      name: "18",
-      component: () => import("../components/品牌筛选/主要.vue"),
+      component: () => import("../components/duqujson/17、获取eagle分组.vue"),
     },
     {
       path: "/test",
       name: "test",
-      component: () => import("../components/标签筛选/展示.vue"),
+      component: () => import("../components/waterfall/3-添加加载.vue"),
+    },
+    {
+      path: "/test2",
+      name: "test2",
+      component: () => import("../components/waterfall/5-图片详情.vue"),
     },
   ],
 });
