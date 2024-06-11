@@ -1,27 +1,24 @@
 <template>
+  <div style="height: 200px; overflow: auto">
+    filteredImages:{{ filteredImages }}<br />
+  </div>
   <div class="container-water-fall">
-    <waterfall :col="col" :data="data" @loadmore="loadmore" :gutterWidth="10">
+    <waterfall
+      :col="col"
+      :data="filteredImages"
+      @loadmore="loadmore"
+      :gutterWidth="10"
+    >
       <div
         class="cell-item"
-        v-for="(item, index) in data"
+        v-for="(item, index) in filteredImages"
         :key="index"
-        @click="showImageDetails(index)"
+        @click="showImageDetails(item)"
       >
         <img
           :src="item.imageUrlThumbnail || item.imageUrl"
           alt="item.folderName"
         />
-        <div class="item-body">
-          <div class="item-desc">{{ item.annotation }}</div>
-          <div class="item-footer">
-            <div
-              v-if="item.avatar"
-              class="avatar"
-              :style="{ backgroundImage: `url(${item.avatar})` }"
-            ></div>
-            <div class="name">{{ item.tags }}</div>
-          </div>
-        </div>
       </div>
     </waterfall>
     <detail
@@ -34,47 +31,19 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, defineProps } from "vue";
-import loading from "./loading.vue";
-import detail from "./图片详情.vue";
-import axios from "axios";
+import { ref, defineProps } from "vue";
+import loading from "../waterfall/loading.vue";
+import detail from "../waterfall/图片详情.vue";
 
-const data = ref([]);
 const col = ref(5);
 const isLoading = ref(false);
-const originData = ref([]);
-const selectedImage = ref([]);
+const selectedImage = ref(null); // 初始化为null
 const props = defineProps({
   filteredImages: Array,
 });
 
-onMounted(() => {
-  fetchImagesInfo();
-});
-// 获取eagle分组中的图片信息
-async function fetchImagesInfo() {
-  try {
-    const response = await axios.get(
-      "https://uiweb.oss-cn-chengdu.aliyuncs.com/images/imagesInfo.json"
-    );
-    originData.value = response.data;
-    data.value = originData.value;
-    console.log("originData", data.value);
-  } catch (error) {
-    console.error("Error fetching images info:", error);
-  }
-}
-
-const itemWidth = computed(
-  () => 133 * 0.5 * (document.documentElement.clientWidth / 375)
-);
-const gutterWidth = computed(
-  () => 10 * 0.5 * (document.documentElement.clientWidth / 375)
-);
-
 // 点击图片显示详情 -------------------------------------------------------------------------------
-const showImageDetails = (index) => {
-  const item = data.value[index];
+const showImageDetails = (item) => {
   selectedImage.value = item;
   // 隐藏主滚动条
   document.body.style.overflow = "hidden";
@@ -86,13 +55,12 @@ const CloseImageDetails = () => {
   // 恢复主滚动条
   document.body.style.overflow = "";
 };
-
+// 用于强制重新渲染waterfall组件的key
+const waterfallKey = ref(0);
 const loadmore = () => {
   isLoading.value = true;
-  setTimeout(() => {
-    data.value = Array.from(data.value.concat(originData));
-    isLoading.value = false;
-  }, 0);
+  props.filteredImages = [...props.filteredImages, ...newData];
+  isLoading.value = false;
 };
 </script>
 

@@ -3,11 +3,9 @@
     <!-- 选中的标签{{ selectedTags }} <br /> -->
     选中的品牌{{ selectedBrand }}<br />
     <!-- folder:{{ folder }}<br /> -->
-    <!-- filteredImages:{{ filteredImages }}<br /> -->
+    filteredImages:{{ filteredImages }}<br />
   </div>
 
-  <!-- {{ metadata }} -->
-  <!-- {{ images }} -->
   <!-- <tagFilter :tags="tags" v-model:selectedTags="selectedTags" /> -->
   <brandFilter :folder="folder" v-model:selectedBrand="selectedBrand" />
   <waterfall :filteredImages="filteredImages" />
@@ -16,7 +14,8 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeMount } from "vue";
 import axios from "axios";
-import waterfall from "../waterfall/5-图片详情.vue";
+import waterfall from "./瀑布流.vue";
+// import waterfall from "../waterfall/5-图片详情.vue";
 import tagFilter from "./TagFilter.vue";
 import brandFilter from "./brandFilter.vue";
 
