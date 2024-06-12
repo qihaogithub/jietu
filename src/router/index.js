@@ -28,7 +28,12 @@ const router = createRouter({
     {
       path: "/test2",
       name: "test2",
-      component: () => import("../components/waterfall/5-图片详情.vue"),
+      component: () => import("../components/waterfall/7-筛选后更新瀑布流.vue"),
+    },
+    {
+      path: "/3",
+      name: "3",
+      component: () => import("../components/waterfall/8-性能优化.vue"),
     },
   ],
 });
