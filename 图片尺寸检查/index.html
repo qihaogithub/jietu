@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片尺寸列表</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      #fileInput {
+        margin-bottom: 20px;
+      }
+      #output {
+        margin-top: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>上传文件夹并列出图片尺寸</h1>
+    <input type="file" id="fileInput" webkitdirectory directory multiple />
+    <div id="output"></div>
+
+    <script>
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", async function (event) {
+          const files = event.target.files;
+          const uniqueSizes = new Set();
+          const output = document.getElementById("output");
+          output.innerHTML = "";
+
+          for (const file of files) {
+            if (file.type.startsWith("image/")) {
+              const img = new Image();
+              img.src = URL.createObjectURL(file);
+
+              await new Promise((resolve) => {
+                img.onload = () => {
+                  const size = `${img.width} x ${img.height}`;
+                  uniqueSizes.add(size);
+                  URL.revokeObjectURL(img.src);
+                  resolve();
+                };
+              });
+            }
+          }
+
+          if (uniqueSizes.size > 0) {
+            const table = document.createElement("table");
+            const thead = document.createElement("thead");
+            const tbody = document.createElement("tbody");
+
+            const headerRow = document.createElement("tr");
+            const th = document.createElement("th");
+            th.textContent = "图片尺寸";
+            headerRow.appendChild(th);
+            thead.appendChild(headerRow);
+
+            uniqueSizes.forEach((size) => {
+              const row = document.createElement("tr");
+              const td = document.createElement("td");
+              td.textContent = size;
+              row.appendChild(td);
+              tbody.appendChild(row);
+            });
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            output.appendChild(table);
+          } else {
+            output.textContent = "没有找到图片文件。";
+          }
+        });
+    </script>
+  </body>
+</html>
